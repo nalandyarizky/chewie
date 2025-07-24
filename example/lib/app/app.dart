@@ -57,63 +57,22 @@ class _ChewieDemoState extends State<ChewieDemo> {
   }
 
   void _createChewieController() {
-    // final subtitles = [
-    //     Subtitle(
-    //       index: 0,
-    //       start: Duration.zero,
-    //       end: const Duration(seconds: 10),
-    //       text: 'Hello from subtitles',
-    //     ),
-    //     Subtitle(
-    //       index: 0,
-    //       start: const Duration(seconds: 10),
-    //       end: const Duration(seconds: 20),
-    //       text: 'Whats up? :)',
-    //     ),
-    //   ];
-
-    final subtitles = [
-      Subtitle(
-        index: 0,
-        start: Duration.zero,
-        end: const Duration(seconds: 10),
-        text: const TextSpan(
-          children: [
-            TextSpan(
-              text: 'Hello',
-              style: TextStyle(color: Colors.red, fontSize: 22),
-            ),
-            TextSpan(
-              text: ' from ',
-              style: TextStyle(color: Colors.green, fontSize: 20),
-            ),
-            TextSpan(
-              text: 'subtitles',
-              style: TextStyle(color: Colors.blue, fontSize: 18),
-            ),
-          ],
-        ),
-      ),
-      Subtitle(
-        index: 0,
-        start: const Duration(seconds: 10),
-        end: const Duration(seconds: 20),
-        text: 'Whats up? :)',
-        // text: const TextSpan(
-        //   text: 'Whats up? :)',
-        //   style: TextStyle(color: Colors.amber, fontSize: 22, fontStyle: FontStyle.italic),
-        // ),
-      ),
-    ];
-
+  
     _chewieController = ChewieController(
       videoPlayerController: _videoPlayerController1,
       autoPlay: true,
+      fullScreenByDefault: true,
       zoomAndPan: true,
+      hideControlsTimer: Duration(seconds: 190),
       looping: true,
-      progressIndicatorDelay:
-          bufferDelay != null ? Duration(milliseconds: bufferDelay!) : null,
-
+      showControls: true,
+      showControlsOnInitialize: false,
+      showOptions: false,
+      videoTitle: 'Chewie Demo',
+      onBack: () {
+        Navigator.of(context).pop();
+      },
+      progressIndicatorDelay: bufferDelay != null ? Duration(milliseconds: bufferDelay!) : null,
       additionalOptions: (context) {
         return <OptionItem>[
           OptionItem(
@@ -123,8 +82,7 @@ class _ChewieDemoState extends State<ChewieDemo> {
           ),
         ];
       },
-      subtitle: Subtitles(subtitles),
-      showSubtitles: true,
+      showSubtitles: false,
       subtitleBuilder: (context, dynamic subtitle) => Container(
         padding: const EdgeInsets.all(10.0),
         child: subtitle is InlineSpan
@@ -135,17 +93,56 @@ class _ChewieDemoState extends State<ChewieDemo> {
               ),
       ),
 
-      hideControlsTimer: const Duration(seconds: 1),
+      // Chapter markers example - 3 chapters at 60s, 120s, and 150s
+      chapterMarkers: const [
+        ChapterMarker(
+          duration: Duration(seconds: 60),
+          color: Colors.red,
+          radius: 8.0, // Larger radius for better visibility
+          title: 'Chapter 1',
+        ),
+        ChapterMarker(
+          duration: Duration(seconds: 120),
+          color: Colors.green,
+          radius: 8.0, // Larger radius for better visibility
+          title: 'Chapter 2',
+        ),
+        ChapterMarker(
+          duration: Duration(seconds: 150),
+          color: Colors.blue,
+          radius: 8.0, // Larger radius for better visibility
+          title: 'Chapter 3',
+        ),
+      ],
+
+      // Don't auto-hide controls in fullscreen mode
+      autoHideControlsInFullScreen: false,
+
+      // Show skip buttons in fullscreen (10 sec forward/backward)
+      showSkipButtonsInFullScreen: false,
+
+      // Allow tap-to-play/pause when controls are hidden
+      tapToPlayPause: true,
+
+      // Hide the progress handle/circle for cleaner chapter marker appearance
+      showProgressHandle: false,
 
       // Try playing around with some of these other options:
 
       // showControls: false,
-      // materialProgressColors: ChewieProgressColors(
-      //   playedColor: Colors.red,
-      //   handleColor: Colors.blue,
-      //   backgroundColor: Colors.grey,
-      //   bufferedColor: Colors.lightGreen,
-      // ),
+      materialProgressColors: ChewieProgressColors(
+        playedColor: Colors.red,
+        handleColor: Colors.blue,
+        backgroundColor: Colors.grey,
+        bufferedColor: Colors.transparent,
+        downloadedColor: Colors.transparent, // New downloaded progress color
+        downloadedRanges: [
+          // Simulate downloaded video segments
+          DurationRange(Duration.zero, Duration(seconds: 30)),
+          DurationRange(Duration(seconds: 60), Duration(seconds: 90)),
+          DurationRange(Duration(seconds: 120), Duration(seconds: 180)),
+        ],
+      ),
       // placeholder: Container(
       //   color: Colors.grey,
       // ),
@@ -177,9 +174,7 @@ class _ChewieDemoState extends State<ChewieDemo> {
           children: <Widget>[
             Expanded(
               child: Center(
-                child: _chewieController != null &&
-                        _chewieController!
-                            .videoPlayerController.value.isInitialized
+                child: _chewieController != null && _chewieController!.videoPlayerController.value.isInitialized
                     ? Chewie(controller: _chewieController!)
                     : const Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -307,8 +302,7 @@ class _ChewieDemoState extends State<ChewieDemo> {
               ListTile(
                 title: const Text("Delay"),
                 subtitle: DelaySlider(
-                  delay:
-                      _chewieController?.progressIndicatorDelay?.inMilliseconds,
+                  delay: _chewieController?.progressIndicatorDelay?.inMilliseconds,
                   onSave: (delay) async {
                     if (delay != null) {
                       bufferDelay = delay == 0 ? null : delay;

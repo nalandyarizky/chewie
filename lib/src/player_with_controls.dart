@@ -20,77 +20,64 @@ class PlayerWithControls extends StatelessWidget {
       return width > height ? width / height : height / width;
     }
 
-    Widget buildControls(
-      BuildContext context,
-      ChewieController chewieController,
-    ) {
-      return chewieController.showControls
-          ? chewieController.customControls ?? const AdaptiveControls()
-          : const SizedBox();
+    Widget buildControls(BuildContext context, ChewieController chewieController) {
+      return chewieController.showControls ? chewieController.customControls ?? const AdaptiveControls() : const SizedBox();
     }
 
-    Widget buildPlayerWithControls(
-      ChewieController chewieController,
-      BuildContext context,
-    ) {
+    Widget buildPlayerWithControls(ChewieController chewieController, BuildContext context) {
       final playerNotifier = context.read<PlayerNotifier>();
       final child = Stack(
         children: [
-          if (chewieController.placeholder != null)
-            chewieController.placeholder!,
-          Center(
-            child: AspectRatio(
-              aspectRatio:
-                  chewieController.aspectRatio ??
-                  chewieController.videoPlayerController.value.aspectRatio,
-              child: VideoPlayer(chewieController.videoPlayerController),
+          if (chewieController.placeholder != null) chewieController.placeholder!,
+          GestureDetector(
+            onTap: () {
+              // Handle tap-to-play/pause when controls are hidden
+              if (chewieController.tapToPlayPause && playerNotifier.hideStuff) {
+                if (chewieController.videoPlayerController.value.isPlaying) {
+                  chewieController.videoPlayerController.pause();
+                } else {
+                  chewieController.videoPlayerController.play();
+                }
+              } else {
+                // Show controls when tapped
+                playerNotifier.hideStuff = false;
+              }
+            },
+            child: Center(
+              child: AspectRatio(
+                aspectRatio: chewieController.aspectRatio ?? chewieController.videoPlayerController.value.aspectRatio,
+                child: VideoPlayer(chewieController.videoPlayerController),
+              ),
             ),
           ),
           if (chewieController.overlay != null) chewieController.overlay!,
           if (Theme.of(context).platform != TargetPlatform.iOS)
             Consumer<PlayerNotifier>(
               builder:
-                  (
-                    BuildContext context,
-                    PlayerNotifier notifier,
-                    Widget? widget,
-                  ) => Visibility(
+                  (BuildContext context, PlayerNotifier notifier, Widget? widget) => Visibility(
                     visible: !notifier.hideStuff,
                     child: AnimatedOpacity(
                       opacity: notifier.hideStuff ? 0.0 : 0.8,
                       duration: const Duration(milliseconds: 250),
-                      child: const DecoratedBox(
-                        decoration: BoxDecoration(color: Colors.black54),
-                        child: SizedBox.expand(),
-                      ),
+                      child: const DecoratedBox(decoration: BoxDecoration(color: Colors.black54), child: SizedBox.expand()),
                     ),
                   ),
             ),
           if (!chewieController.isFullScreen)
             buildControls(context, chewieController)
           else
-            SafeArea(
-              bottom: false,
-              child: buildControls(context, chewieController),
-            ),
+            SafeArea(bottom: false, child: buildControls(context, chewieController)),
         ],
       );
 
-      if (chewieController.zoomAndPan ||
-          chewieController.transformationController != null) {
+      if (chewieController.zoomAndPan || chewieController.transformationController != null) {
         return InteractiveViewer(
           transformationController: chewieController.transformationController,
           maxScale: chewieController.maxScale,
           panEnabled: chewieController.zoomAndPan,
           scaleEnabled: chewieController.zoomAndPan,
-          onInteractionUpdate:
-              chewieController.zoomAndPan
-                  ? (_) => playerNotifier.hideStuff = true
-                  : null,
-          onInteractionEnd:
-              chewieController.zoomAndPan
-                  ? (_) => playerNotifier.hideStuff = false
-                  : null,
+          onInteractionUpdate: chewieController.zoomAndPan ? (_) => playerNotifier.hideStuff = true : null,
+          onInteractionEnd: chewieController.zoomAndPan ? (_) => playerNotifier.hideStuff = false : null,
           child: child,
         );
       }
@@ -104,10 +91,7 @@ class PlayerWithControls extends StatelessWidget {
           child: SizedBox(
             height: constraints.maxHeight,
             width: constraints.maxWidth,
-            child: AspectRatio(
-              aspectRatio: calculateAspectRatio(context),
-              child: buildPlayerWithControls(chewieController, context),
-            ),
+            child: AspectRatio(aspectRatio: calculateAspectRatio(context), child: buildPlayerWithControls(chewieController, context)),
           ),
         );
       },

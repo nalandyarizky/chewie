@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:chewie/chewie.dart';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
@@ -14,6 +15,7 @@ class VideoProgressBar extends StatefulWidget {
     required this.barHeight,
     required this.handleHeight,
     required this.drawShadow,
+    this.showProgressHandle = true,
   }) : colors = colors ?? ChewieProgressColors();
 
   final VideoPlayerController controller;
@@ -26,6 +28,7 @@ class VideoProgressBar extends StatefulWidget {
   final double handleHeight;
   final bool drawShadow;
   final bool draggableProgressBar;
+  final bool showProgressHandle;
 
   @override
   // ignore: library_private_types_in_public_api
@@ -59,9 +62,7 @@ class _VideoProgressBarState extends State<VideoProgressBar> {
   }
 
   void _seekToRelativePosition(Offset globalPosition) {
-    controller.seekTo(
-      context.calcRelativePosition(controller.value.duration, globalPosition),
-    );
+    controller.seekTo(context.calcRelativePosition(controller.value.duration, globalPosition));
   }
 
   @override
@@ -73,6 +74,7 @@ class _VideoProgressBarState extends State<VideoProgressBar> {
         barHeight: widget.barHeight,
         handleHeight: widget.handleHeight,
         drawShadow: widget.drawShadow,
+        showProgressHandle: widget.showProgressHandle,
         latestDraggableOffset: _latestDraggableOffset,
       ),
     );
@@ -131,6 +133,7 @@ class StaticProgressBar extends StatelessWidget {
     required this.barHeight,
     required this.handleHeight,
     required this.drawShadow,
+    this.showProgressHandle = true,
     this.latestDraggableOffset,
   });
 
@@ -141,6 +144,7 @@ class StaticProgressBar extends StatelessWidget {
   final double barHeight;
   final double handleHeight;
   final bool drawShadow;
+  final bool showProgressHandle;
 
   @override
   Widget build(BuildContext context) {
@@ -151,17 +155,12 @@ class StaticProgressBar extends StatelessWidget {
       child: CustomPaint(
         painter: _ProgressBarPainter(
           value: value,
-          draggableValue:
-              latestDraggableOffset != null
-                  ? context.calcRelativePosition(
-                    value.duration,
-                    latestDraggableOffset!,
-                  )
-                  : null,
+          draggableValue: latestDraggableOffset != null ? context.calcRelativePosition(value.duration, latestDraggableOffset!) : null,
           colors: colors,
           barHeight: barHeight,
           handleHeight: handleHeight,
           drawShadow: drawShadow,
+          showProgressHandle: showProgressHandle,
         ),
       ),
     );
@@ -175,6 +174,7 @@ class _ProgressBarPainter extends CustomPainter {
     required this.barHeight,
     required this.handleHeight,
     required this.drawShadow,
+    required this.showProgressHandle,
     required this.draggableValue,
   });
 
@@ -184,6 +184,7 @@ class _ProgressBarPainter extends CustomPainter {
   final double barHeight;
   final double handleHeight;
   final bool drawShadow;
+  final bool showProgressHandle;
 
   /// The value of the draggable progress bar.
   /// If null, the progress bar is not being dragged.
@@ -200,10 +201,7 @@ class _ProgressBarPainter extends CustomPainter {
 
     canvas.drawRRect(
       RRect.fromRectAndRadius(
-        Rect.fromPoints(
-          Offset(0.0, baseOffset),
-          Offset(size.width, baseOffset + barHeight),
-        ),
+        Rect.fromPoints(Offset(0.0, baseOffset), Offset(size.width, baseOffset + barHeight)),
         const Radius.circular(4.0),
       ),
       colors.backgroundPaint,
@@ -212,54 +210,90 @@ class _ProgressBarPainter extends CustomPainter {
       return;
     }
     final double playedPartPercent =
-        (draggableValue != null
-            ? draggableValue!.inMilliseconds
-            : value.position.inMilliseconds) /
-        value.duration.inMilliseconds;
-    final double playedPart =
-        playedPartPercent > 1 ? size.width : playedPartPercent * size.width;
+        (draggableValue != null ? draggableValue!.inMilliseconds : value.position.inMilliseconds) / value.duration.inMilliseconds;
+    final double playedPart = playedPartPercent > 1 ? size.width : playedPartPercent * size.width;
     for (final DurationRange range in value.buffered) {
       final double start = range.startFraction(value.duration) * size.width;
       final double end = range.endFraction(value.duration) * size.width;
       canvas.drawRRect(
         RRect.fromRectAndRadius(
-          Rect.fromPoints(
-            Offset(start, baseOffset),
-            Offset(end, baseOffset + barHeight),
-          ),
+          Rect.fromPoints(Offset(start, baseOffset), Offset(end, baseOffset + barHeight)),
           const Radius.circular(4.0),
         ),
         colors.bufferedPaint,
       );
     }
+
+    // Draw downloaded/cached progress ranges
+    for (final DurationRange range in colors.downloadedRanges) {
+      final double start = range.startFraction(value.duration) * size.width;
+      final double end = range.endFraction(value.duration) * size.width;
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromPoints(Offset(start, baseOffset), Offset(end, baseOffset + barHeight)),
+          const Radius.circular(4.0),
+        ),
+        colors.downloadedPaint,
+      );
+    }
+
     canvas.drawRRect(
       RRect.fromRectAndRadius(
-        Rect.fromPoints(
-          Offset(0.0, baseOffset),
-          Offset(playedPart, baseOffset + barHeight),
-        ),
+        Rect.fromPoints(Offset(0.0, baseOffset), Offset(playedPart, baseOffset + barHeight)),
         const Radius.circular(4.0),
       ),
       colors.playedPaint,
     );
 
-    if (drawShadow) {
-      final Path shadowPath =
-          Path()..addOval(
-            Rect.fromCircle(
-              center: Offset(playedPart, baseOffset + barHeight / 2),
-              radius: handleHeight,
-            ),
-          );
+    // Draw chapter markers
+    for (final chapterMarker in colors.chapterMarkers) {
+      if (chapterMarker.duration <= value.duration) {
+        final double markerPosition = (chapterMarker.duration.inMilliseconds / value.duration.inMilliseconds) * size.width;
 
-      canvas.drawShadow(shadowPath, Colors.black, 0.2, false);
+        // Determine current playback position for comparison
+        final Duration currentPosition = draggableValue ?? value.position;
+        final bool hasReachedChapter = currentPosition >= chapterMarker.duration;
+
+        // Make chapter markers bigger than the progress bar
+        // Use a minimum size that's larger than the bar height to make them prominent
+        final double markerRadius = math.max(chapterMarker.radius, barHeight * 0.8);
+
+        // Make the inner white circle smaller than the progress bar height
+        final double innerWhiteRadius = math.min(markerRadius * 0.8, barHeight * 0.4);
+
+        // Center the marker vertically on the progress bar
+        final double markerCenterY = baseOffset + barHeight / 2;
+
+        // Draw white filled circle (smaller than progress bar height)
+        final Paint whiteFilledPaint =
+            Paint()
+              ..color = Colors.white
+              ..style = PaintingStyle.fill;
+
+        canvas.drawCircle(Offset(markerPosition, markerCenterY), innerWhiteRadius, whiteFilledPaint);
+
+        // Draw colored border - use chapter color if reached, background color if not reached
+        final Paint borderPaint =
+            Paint()
+              ..color = hasReachedChapter ? chapterMarker.color : colors.backgroundPaint.color
+              ..style = PaintingStyle.stroke
+              ..strokeWidth = 6.0; // Slightly thicker border for better visibility
+
+        canvas.drawCircle(Offset(markerPosition, markerCenterY), markerRadius, borderPaint);
+      }
     }
 
-    canvas.drawCircle(
-      Offset(playedPart, baseOffset + barHeight / 2),
-      handleHeight,
-      colors.handlePaint,
-    );
+    // Only draw progress handle if showProgressHandle is true
+    if (showProgressHandle) {
+      if (drawShadow) {
+        final Path shadowPath =
+            Path()..addOval(Rect.fromCircle(center: Offset(playedPart, baseOffset + barHeight / 2), radius: handleHeight));
+
+        canvas.drawShadow(shadowPath, Colors.black, 0.2, false);
+      }
+
+      canvas.drawCircle(Offset(playedPart, baseOffset + barHeight / 2), handleHeight, colors.handlePaint);
+    }
   }
 }
 
