@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:chewie/chewie.dart';
 import 'package:chewie_example/app/theme.dart';
 import 'package:flutter/material.dart';
@@ -57,7 +59,11 @@ class _ChewieDemoState extends State<ChewieDemo> {
   }
 
   void _createChewieController() {
-  
+    var radiusChapterMarkers = 8.0; // Radius for chapter markers
+    if (Platform.isIOS) {
+      radiusChapterMarkers = 4.0;
+    }
+
     _chewieController = ChewieController(
       videoPlayerController: _videoPlayerController1,
       autoPlay: true,
@@ -70,6 +76,7 @@ class _ChewieDemoState extends State<ChewieDemo> {
       showOptions: false,
       videoTitle: 'Chewie Demo',
       onBack: () {
+        _chewieController?.exitFullScreen();
         Navigator.of(context).pop();
       },
       progressIndicatorDelay: bufferDelay != null ? Duration(milliseconds: bufferDelay!) : null,
@@ -94,23 +101,23 @@ class _ChewieDemoState extends State<ChewieDemo> {
       ),
 
       // Chapter markers example - 3 chapters at 60s, 120s, and 150s
-      chapterMarkers: const [
+      chapterMarkers: [
         ChapterMarker(
           duration: Duration(seconds: 60),
           color: Colors.red,
-          radius: 8.0, // Larger radius for better visibility
+          radius: radiusChapterMarkers, // Larger radius for better visibility
           title: 'Chapter 1',
         ),
         ChapterMarker(
           duration: Duration(seconds: 120),
           color: Colors.green,
-          radius: 8.0, // Larger radius for better visibility
+          radius: radiusChapterMarkers, // Larger radius for better visibility
           title: 'Chapter 2',
         ),
         ChapterMarker(
           duration: Duration(seconds: 150),
           color: Colors.blue,
-          radius: 8.0, // Larger radius for better visibility
+          radius: radiusChapterMarkers, // Larger radius for better visibility
           title: 'Chapter 3',
         ),
       ],
@@ -143,11 +150,25 @@ class _ChewieDemoState extends State<ChewieDemo> {
           DurationRange(Duration(seconds: 120), Duration(seconds: 180)),
         ],
       ),
+      cupertinoProgressColors: ChewieProgressColors(
+        playedColor: Colors.red,
+        handleColor: Colors.blue,
+        backgroundColor: Colors.grey,
+        bufferedColor: Colors.transparent,
+        downloadedColor: Colors.transparent, // New downloaded progress color
+        downloadedRanges: [
+          // Simulate downloaded video segments
+          DurationRange(Duration.zero, Duration(seconds: 30)),
+          DurationRange(Duration(seconds: 60), Duration(seconds: 90)),
+          DurationRange(Duration(seconds: 120), Duration(seconds: 180)),
+        ],
+      ),
       // placeholder: Container(
       //   color: Colors.grey,
       // ),
       // autoInitialize: true,
     );
+
   }
 
   int currPlayIndex = 0;
@@ -213,34 +234,7 @@ class _ChewieDemoState extends State<ChewieDemo> {
                   child: TextButton(
                     onPressed: () {
                       setState(() {
-                        _videoPlayerController2.pause();
-                        _videoPlayerController2.seekTo(Duration.zero);
-                        _chewieController = _chewieController!.copyWith(
-                          videoPlayerController: _videoPlayerController2,
-                          autoPlay: true,
-                          looping: true,
-                          /* subtitle: Subtitles([
-                            Subtitle(
-                              index: 0,
-                              start: Duration.zero,
-                              end: const Duration(seconds: 10),
-                              text: 'Hello from subtitles',
-                            ),
-                            Subtitle(
-                              index: 0,
-                              start: const Duration(seconds: 10),
-                              end: const Duration(seconds: 20),
-                              text: 'Whats up? :)',
-                            ),
-                          ]),
-                          subtitleBuilder: (context, subtitle) => Container(
-                            padding: const EdgeInsets.all(10.0),
-                            child: Text(
-                              subtitle,
-                              style: const TextStyle(color: Colors.white),
-                            ),
-                          ), */
-                        );
+                        Navigator.pop(context);
                       });
                     },
                     child: const Padding(

@@ -66,33 +66,38 @@ class _MaterialControlsState extends State<MaterialControls> with SingleTickerPr
       onHover: (_) {
         _cancelAndRestartTimer();
       },
-      child: GestureDetector(
-        onTap: () => _playPause(),
-        child: AbsorbPointer(
-          absorbing: controller.value.isPlaying,
-          child: Stack(
-            children: [
-              if (_displayBufferingIndicator)
-                _chewieController?.bufferingBuilder?.call(context) ?? const Center(child: CircularProgressIndicator())
-              else
-                _buildHitArea(),
+      child: Stack(
+        children: [
+          GestureDetector(
+            onTap: () => _playPause(),
+            child: AbsorbPointer(
+              absorbing: controller.value.isPlaying,
+              child: Stack(
+                children: [
+                  if (_displayBufferingIndicator)
+                    _chewieController?.bufferingBuilder?.call(context) ?? const Center(child: CircularProgressIndicator())
+                  else
+                    _buildHitArea(),
 
-              Column(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: <Widget>[
-                  _buildActionBar(),
-                  Spacer(),
-                  if (_subtitleOn)
-                    Transform.translate(
-                      offset: Offset(0.0, notifier.hideStuff ? barHeight * 0.8 : 0.0),
-                      child: _buildSubtitles(context, chewieController.subtitle!),
-                    ),
-                  _buildBottomBar(context),
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: <Widget>[
+                      Spacer(),
+                      if (_subtitleOn)
+                        Transform.translate(
+                          offset: Offset(0.0, notifier.hideStuff ? barHeight * 0.8 : 0.0),
+                          child: _buildSubtitles(context, chewieController.subtitle!),
+                        ),
+                      _buildBottomBar(context),
+                    ],
+                  ),
                 ],
               ),
-            ],
+            ),
           ),
-        ),
+          // Place action bar outside the GestureDetector to avoid conflicts
+          _buildActionBar(),
+        ],
       ),
     );
   }
@@ -127,29 +132,41 @@ class _MaterialControlsState extends State<MaterialControls> with SingleTickerPr
   Widget _buildActionBar() {
     return Positioned(
       top: 0,
+      left: 0,
       right: 0,
       child: SafeArea(
         child: AnimatedOpacity(
-          opacity: 1,
+          opacity: (notifier.hideStuff || controller.value.isPlaying) ? 0.0 : 1.0,
           duration: const Duration(milliseconds: 250),
           child: Padding(
             padding: const EdgeInsets.all(16),
-            child: Row(children:[
-              IconButton(
-                onPressed: () {
-                  _chewieController?.onBack ?? Navigator.of(context).pop();
-                },
-                icon: const Icon(Icons.arrow_back_sharp, color: Colors.white,size: 30,),
-              ),
-              Expanded(child: Text(chewieController.videoTitle ?? '',style: TextStyle(color: Colors.white, fontSize: 18,fontWeight: FontWeight.w700),maxLines: 1, overflow: TextOverflow.ellipsis)),
-            ]),
+            child: Row(
+              children: [
+                IconButton(
+                  onPressed: () {
+                    if (chewieController.onBack != null) {
+                      chewieController.onBack!();
+                    } else {
+                      Navigator.of(context).pop();
+                    }
+                  },
+                  icon: const Icon(Icons.arrow_back_sharp, color: Colors.white, size: 30),
+                ),
+                Expanded(
+                  child: Text(
+                    chewieController.videoTitle ?? '',
+                    style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
-
-
 
   Widget _buildSubtitles(BuildContext context, Subtitles subtitles) {
     if (!_subtitleOn) {
@@ -212,8 +229,6 @@ class _MaterialControlsState extends State<MaterialControls> with SingleTickerPr
     );
   }
 
-
-
   Widget _buildHitArea() {
     final bool isFinished = (_latestValue.position >= _latestValue.duration) && _latestValue.duration.inSeconds > 0;
     final bool showPlayButton = widget.showPlayButton && !_dragging && !notifier.hideStuff;
@@ -247,44 +262,44 @@ class _MaterialControlsState extends State<MaterialControls> with SingleTickerPr
       },
       child: Visibility(
         visible: !controller.value.isPlaying,
-        child: Container(
-          alignment: Alignment.center,
-          color: Colors.transparent, // The Gesture Detector doesn't expand to the full size of the container without this; Not sure why!
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              if (showSkipButtons)
-                CenterSeekButton(
-                  iconData: Icons.replay_10,
-                  backgroundColor: Colors.black54,
-                  iconColor: Colors.white,
-                  show: showPlayButton,
-                  fadeDuration: chewieController.materialSeekButtonFadeDuration,
-                  iconSize: chewieController.materialSeekButtonSize,
-                  onPressed: _seekBackward,
+        child: SizedBox.expand(
+          child: Center(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (showSkipButtons)
+                  CenterSeekButton(
+                    iconData: Icons.replay_10,
+                    backgroundColor: Colors.black54,
+                    iconColor: Colors.white,
+                    show: showPlayButton,
+                    fadeDuration: chewieController.materialSeekButtonFadeDuration,
+                    iconSize: chewieController.materialSeekButtonSize,
+                    onPressed: _seekBackward,
+                  ),
+                Container(
+                  margin: EdgeInsets.symmetric(horizontal: marginSize),
+                  child: CenterPlayButton(
+                    backgroundColor: Colors.black54,
+                    iconColor: Colors.white,
+                    isFinished: isFinished,
+                    isPlaying: controller.value.isPlaying,
+                    show: showPlayButton,
+                    onPressed: _playPause,
+                  ),
                 ),
-              Container(
-                margin: EdgeInsets.symmetric(horizontal: marginSize),
-                child: CenterPlayButton(
-                  backgroundColor: Colors.black54,
-                  iconColor: Colors.white,
-                  isFinished: isFinished,
-                  isPlaying: controller.value.isPlaying,
-                  show: showPlayButton,
-                  onPressed: _playPause,
-                ),
-              ),
-              if (showSkipButtons)
-                CenterSeekButton(
-                  iconData: Icons.forward_10,
-                  backgroundColor: Colors.black54,
-                  iconColor: Colors.white,
-                  show: showPlayButton,
-                  fadeDuration: chewieController.materialSeekButtonFadeDuration,
-                  iconSize: chewieController.materialSeekButtonSize,
-                  onPressed: _seekForward,
-                ),
-            ],
+                if (showSkipButtons)
+                  CenterSeekButton(
+                    iconData: Icons.forward_10,
+                    backgroundColor: Colors.black54,
+                    iconColor: Colors.white,
+                    show: showPlayButton,
+                    fadeDuration: chewieController.materialSeekButtonFadeDuration,
+                    iconSize: chewieController.materialSeekButtonSize,
+                    onPressed: _seekForward,
+                  ),
+              ],
+            ),
           ),
         ),
       ),

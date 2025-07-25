@@ -256,10 +256,10 @@ class _ProgressBarPainter extends CustomPainter {
 
         // Make chapter markers bigger than the progress bar
         // Use a minimum size that's larger than the bar height to make them prominent
-        final double markerRadius = math.max(chapterMarker.radius, barHeight * 0.8);
+        final double markerRadius = 7;
 
         // Make the inner white circle smaller than the progress bar height
-        final double innerWhiteRadius = math.min(markerRadius * 0.8, barHeight * 0.4);
+        final double innerWhiteRadius = 7;
 
         // Center the marker vertically on the progress bar
         final double markerCenterY = baseOffset + barHeight / 2;

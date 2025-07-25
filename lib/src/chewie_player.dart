@@ -262,7 +262,7 @@ class ChewieController extends ChangeNotifier {
     this.tapToPlayPause = true,
     this.showProgressHandle = true,
     this.onBack,
-    this.videoTitle
+    this.videoTitle,
   }) : assert(playbackSpeeds.every((speed) => speed > 0), 'The playbackSpeeds values must all be greater than 0') {
     _initialize();
   }
@@ -587,10 +587,6 @@ class ChewieController extends ChangeNotifier {
     }
 
     if (autoPlay) {
-      if (fullScreenByDefault) {
-        enterFullScreen();
-      }
-
       await videoPlayerController.play();
     }
 
@@ -598,15 +594,14 @@ class ChewieController extends ChangeNotifier {
       await videoPlayerController.seekTo(startAt!);
     }
 
+    // Handle fullScreenByDefault immediately after initialization
     if (fullScreenByDefault) {
-      videoPlayerController.addListener(_fullScreenListener);
-    }
-  }
-
-  Future<void> _fullScreenListener() async {
-    if (videoPlayerController.value.isPlaying && !_isFullScreen) {
-      enterFullScreen();
-      videoPlayerController.removeListener(_fullScreenListener);
+      // Use a post-frame callback to ensure the widget is fully built
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!_isFullScreen) {
+          enterFullScreen();
+        }
+      });
     }
   }
 
