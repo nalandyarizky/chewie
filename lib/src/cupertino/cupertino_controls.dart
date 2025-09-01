@@ -443,7 +443,7 @@ class _CupertinoControlsState extends State<CupertinoControls> with SingleTicker
                   Expanded(
                     child: Text(
                       chewieController.videoTitle ?? '',
-                      style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w400),
+                      style: TextStyle(color: Colors.red, fontSize: 18, fontWeight: FontWeight.w400),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
