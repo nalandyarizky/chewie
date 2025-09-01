@@ -172,6 +172,7 @@ class _CupertinoControlsState extends State<CupertinoControls> with SingleTicker
         opacity: 1,
         duration: const Duration(milliseconds: 300),
         child: Container(
+          width: double.infinity,
           color: Colors.transparent,
           alignment: Alignment.bottomCenter,
           margin: EdgeInsets.all(marginSize),
@@ -180,6 +181,7 @@ class _CupertinoControlsState extends State<CupertinoControls> with SingleTicker
             child: BackdropFilter(
               filter: ui.ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
               child: Container(
+                width: double.infinity,
                 height: barHeight,
                 color: backgroundColor,
                 child:
@@ -410,41 +412,44 @@ class _CupertinoControlsState extends State<CupertinoControls> with SingleTicker
       top: 0,
       left: 0,
       right: 0,
-      child: AnimatedOpacity(
-        opacity: (notifier.hideStuff || controller.value.isPlaying) ? 0.0 : 1.0,
-        duration: const Duration(milliseconds: 250),
-        child: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [Colors.black.withValues(alpha: 0.7), Colors.black.withValues(alpha: 0.3), Colors.transparent],
-              stops: const [0.0, 0.7, 1.0],
+      child: SafeArea(
+        child: AnimatedOpacity(
+          opacity: (notifier.hideStuff || controller.value.isPlaying) ? 0.0 : 1.0,
+          duration: const Duration(milliseconds: 250),
+          child: Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Colors.black.withValues(alpha: 0.7), Colors.black.withValues(alpha: 0.3), Colors.transparent],
+                stops: const [0.0, 0.7, 1.0],
+              ),
             ),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                IconButton(
-                  onPressed: () {
-                    if (chewieController.onBack != null) {
-                      chewieController.onBack!();
-                    } else {
-                      Navigator.of(context).pop();
-                    }
-                  },
-                  icon: const Icon(Icons.arrow_back, color: Colors.white, size: 30),
-                ),
-                Expanded(
-                  child: Text(
-                    chewieController.videoTitle ?? '',
-                    style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w400),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  IconButton(
+                    onPressed: () {
+                      if (chewieController.onBack != null) {
+                        chewieController.onBack!();
+                      } else {
+                        Navigator.of(context).pop();
+                      }
+                    },
+                    icon: const Icon(Icons.arrow_back, color: Colors.white, size: 30),
                   ),
-                ),
-              ],
+                  Expanded(
+                    child: Text(
+                      chewieController.videoTitle ?? '',
+                      style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w400),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
