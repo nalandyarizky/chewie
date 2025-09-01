@@ -45,6 +45,7 @@ class _MaterialControlsState extends State<MaterialControls> with SingleTickerPr
 
   late VideoPlayerController controller;
   ChewieController? _chewieController;
+  bool _chewieControllerListenerAttached = false;
 
   // We know that _chewieController is set in didChangeDependencies
   ChewieController get chewieController => _chewieController!;
@@ -113,6 +114,12 @@ class _MaterialControlsState extends State<MaterialControls> with SingleTickerPr
     _hideTimer?.cancel();
     _initTimer?.cancel();
     _showAfterExpandCollapseTimer?.cancel();
+    if (_chewieControllerListenerAttached) {
+      try {
+        chewieController.removeListener(_onChewieControllerChanged);
+      } catch (_) {}
+      _chewieControllerListenerAttached = false;
+    }
   }
 
   @override
@@ -428,6 +435,20 @@ class _MaterialControlsState extends State<MaterialControls> with SingleTickerPr
 
     _updateState();
 
+    // Attach a listener to ChewieController (once) so we rebuild when fullscreen/state changes
+    if (!_chewieControllerListenerAttached) {
+      chewieController.addListener(_onChewieControllerChanged);
+      _chewieControllerListenerAttached = true;
+    }
+
+    // Force a rebuild right after first frame to pick up orientation/fullscreen constraint changes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (chewieController.fullScreenByDefault || chewieController.isFullScreen) {
+        setState(() {});
+      }
+    });
+
     if (controller.value.isPlaying || chewieController.autoPlay) {
       _startHideTimer();
     }
@@ -439,6 +460,12 @@ class _MaterialControlsState extends State<MaterialControls> with SingleTickerPr
         });
       });
     }
+  }
+
+  void _onChewieControllerChanged() {
+    if (!mounted) return;
+    // Rebuild when ChewieController notifies (e.g., fullscreen toggled) to update layout widths immediately
+    setState(() {});
   }
 
   void _onExpandCollapse() {

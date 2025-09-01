@@ -51,6 +51,7 @@ class _CupertinoControlsState extends State<CupertinoControls> with SingleTicker
   // We know that _chewieController is set in didChangeDependencies
   ChewieController get chewieController => _chewieController!;
   ChewieController? _chewieController;
+  bool _chewieControllerListenerAttached = false;
 
   @override
   void initState() {
@@ -111,6 +112,12 @@ class _CupertinoControlsState extends State<CupertinoControls> with SingleTicker
     _hideTimer?.cancel();
     _expandCollapseTimer?.cancel();
     _initTimer?.cancel();
+    if (_chewieControllerListenerAttached) {
+      try {
+        chewieController.removeListener(_onChewieControllerChanged);
+      } catch (_) {}
+      _chewieControllerListenerAttached = false;
+    }
   }
 
   @override
@@ -505,6 +512,20 @@ class _CupertinoControlsState extends State<CupertinoControls> with SingleTicker
 
     _updateState();
 
+    // Attach a listener (only once) so layout updates when fullscreen state changes early
+    if (!_chewieControllerListenerAttached) {
+      chewieController.addListener(_onChewieControllerChanged);
+      _chewieControllerListenerAttached = true;
+    }
+
+    // Post-frame rebuild to capture fullscreen constraints on very first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (chewieController.fullScreenByDefault || chewieController.isFullScreen) {
+        setState(() {});
+      }
+    });
+
     if (controller.value.isPlaying || chewieController.autoPlay) {
       _startHideTimer();
     }
@@ -516,6 +537,11 @@ class _CupertinoControlsState extends State<CupertinoControls> with SingleTicker
         });
       });
     }
+  }
+
+  void _onChewieControllerChanged() {
+    if (!mounted) return;
+    setState(() {}); // Rebuild to ensure action bar uses correct width right away
   }
 
   void _onExpandCollapse() {
