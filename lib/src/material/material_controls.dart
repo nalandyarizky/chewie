@@ -145,8 +145,13 @@ class _MaterialControlsState extends State<MaterialControls> with SingleTickerPr
               stops: const [0.0, 0.7, 1.0],
             ),
           ),
-          child:
-              chewieController.isFullScreen
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              // Use MediaQuery to detect if we're in landscape mode (likely fullscreen)
+              final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+              final shouldUseFullscreenLayout = chewieController.isFullScreen || chewieController.fullScreenByDefault || isLandscape;
+
+              return shouldUseFullscreenLayout
                   ? Padding(
                     padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top + 16, left: 16, right: 16, bottom: 16),
                     child: Row(
@@ -198,7 +203,9 @@ class _MaterialControlsState extends State<MaterialControls> with SingleTickerPr
                         ],
                       ),
                     ),
-                  ),
+                  );
+            },
+          ),
         ),
       ),
     );
