@@ -134,43 +134,41 @@ class _MaterialControlsState extends State<MaterialControls> with SingleTickerPr
       top: 0,
       left: 0,
       right: 0,
-      child: SafeArea(
-        child: AnimatedOpacity(
-          opacity: (notifier.hideStuff || controller.value.isPlaying) ? 0.0 : 1.0,
-          duration: const Duration(milliseconds: 250),
-          child: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [Colors.black.withValues(alpha: 0.7), Colors.black.withValues(alpha: 0.3), Colors.transparent],
-                stops: const [0.0, 0.7, 1.0],
-              ),
+      child: AnimatedOpacity(
+        opacity: (notifier.hideStuff || controller.value.isPlaying) ? 0.0 : 1.0,
+        duration: const Duration(milliseconds: 250),
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Colors.black.withValues(alpha: 0.7), Colors.black.withValues(alpha: 0.3), Colors.transparent],
+              stops: const [0.0, 0.7, 1.0],
             ),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  IconButton(
-                    onPressed: () {
-                      if (chewieController.onBack != null) {
-                        chewieController.onBack!();
-                      } else {
-                        Navigator.of(context).pop();
-                      }
-                    },
-                    icon: const Icon(Icons.arrow_back_sharp, color: Colors.white, size: 30),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                IconButton(
+                  onPressed: () {
+                    if (chewieController.onBack != null) {
+                      chewieController.onBack!();
+                    } else {
+                      Navigator.of(context).pop();
+                    }
+                  },
+                  icon: const Icon(Icons.arrow_back_sharp, color: Colors.white, size: 30),
+                ),
+                Expanded(
+                  child: Text(
+                    chewieController.videoTitle ?? '',
+                    style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w400),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  Expanded(
-                    child: Text(
-                      chewieController.videoTitle ?? '',
-                      style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
