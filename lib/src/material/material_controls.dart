@@ -145,33 +145,60 @@ class _MaterialControlsState extends State<MaterialControls> with SingleTickerPr
               stops: const [0.0, 0.7, 1.0],
             ),
           ),
-          child: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  IconButton(
-                    onPressed: () {
-                      if (chewieController.onBack != null) {
-                        chewieController.onBack!();
-                      } else {
-                        Navigator.of(context).pop();
-                      }
-                    },
-                    icon: const Icon(Icons.arrow_back_sharp, color: Colors.white, size: 30),
-                  ),
-                  Expanded(
-                    child: Text(
-                      chewieController.videoTitle ?? '',
-                      style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w400),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+          child:
+              chewieController.isFullScreen
+                  ? Padding(
+                    padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top + 16, left: 16, right: 16, bottom: 16),
+                    child: Row(
+                      children: [
+                        IconButton(
+                          onPressed: () {
+                            if (chewieController.onBack != null) {
+                              chewieController.onBack!();
+                            } else {
+                              Navigator.of(context).pop();
+                            }
+                          },
+                          icon: const Icon(Icons.arrow_back_sharp, color: Colors.white, size: 30),
+                        ),
+                        Expanded(
+                          child: Text(
+                            chewieController.videoTitle ?? '',
+                            style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w400),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                  : SafeArea(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        children: [
+                          IconButton(
+                            onPressed: () {
+                              if (chewieController.onBack != null) {
+                                chewieController.onBack!();
+                              } else {
+                                Navigator.of(context).pop();
+                              }
+                            },
+                            icon: const Icon(Icons.arrow_back_sharp, color: Colors.white, size: 30),
+                          ),
+                          Expanded(
+                            child: Text(
+                              chewieController.videoTitle ?? '',
+                              style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w400),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ],
-              ),
-            ),
-          ),
         ),
       ),
     );
