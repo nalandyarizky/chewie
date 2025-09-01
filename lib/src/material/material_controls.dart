@@ -68,6 +68,7 @@ class _MaterialControlsState extends State<MaterialControls> with SingleTickerPr
         _cancelAndRestartTimer();
       },
       child: Stack(
+        clipBehavior: Clip.none,
         children: [
           GestureDetector(
             onTap: () => _playPause(),
@@ -157,31 +158,37 @@ class _MaterialControlsState extends State<MaterialControls> with SingleTickerPr
               // Use MediaQuery to detect if we're in landscape mode (likely fullscreen)
               final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
               final shouldUseFullscreenLayout = chewieController.isFullScreen || chewieController.fullScreenByDefault || isLandscape;
+              final screenWidth = MediaQuery.of(context).size.width;
 
               return shouldUseFullscreenLayout
-                  ? Padding(
-                    padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top + 16, left: 16, right: 16, bottom: 16),
-                    child: Row(
-                      children: [
-                        IconButton(
-                          onPressed: () {
-                            if (chewieController.onBack != null) {
-                              chewieController.onBack!();
-                            } else {
-                              Navigator.of(context).pop();
-                            }
-                          },
-                          icon: const Icon(Icons.arrow_back_sharp, color: Colors.white, size: 30),
-                        ),
-                        Expanded(
-                          child: Text(
-                            chewieController.videoTitle ?? '',
-                            style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w400),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                  ? OverflowBox(
+                    alignment: Alignment.topCenter,
+                    minWidth: screenWidth,
+                    maxWidth: screenWidth,
+                    child: Padding(
+                      padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top + 16, left: 16, right: 16, bottom: 16),
+                      child: Row(
+                        children: [
+                          IconButton(
+                            onPressed: () {
+                              if (chewieController.onBack != null) {
+                                chewieController.onBack!();
+                              } else {
+                                Navigator.of(context).pop();
+                              }
+                            },
+                            icon: const Icon(Icons.arrow_back_sharp, color: Colors.white, size: 30),
                           ),
-                        ),
-                      ],
+                          Expanded(
+                            child: Text(
+                              chewieController.videoTitle ?? '',
+                              style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w400),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   )
                   : SafeArea(
@@ -443,6 +450,14 @@ class _MaterialControlsState extends State<MaterialControls> with SingleTickerPr
 
     // Force a rebuild right after first frame to pick up orientation/fullscreen constraint changes
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (chewieController.fullScreenByDefault || chewieController.isFullScreen) {
+        setState(() {});
+      }
+    });
+
+    // Second delayed rebuild (after orientation / aspect ratio settles)
+    Future.delayed(const Duration(milliseconds: 80), () {
       if (!mounted) return;
       if (chewieController.fullScreenByDefault || chewieController.isFullScreen) {
         setState(() {});
