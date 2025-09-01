@@ -138,9 +138,10 @@ class _MaterialControlsState extends State<MaterialControls> with SingleTickerPr
   }
 
   Widget _buildActionBar() {
-    return Positioned.fill(
+    return Positioned(
       top: 0,
-      bottom: null,
+      left: 0,
+      right: 0,
       child: AnimatedOpacity(
         opacity: (notifier.hideStuff || controller.value.isPlaying) ? 0.0 : 1.0,
         duration: const Duration(milliseconds: 250),
@@ -158,37 +159,44 @@ class _MaterialControlsState extends State<MaterialControls> with SingleTickerPr
               // Use MediaQuery to detect if we're in landscape mode (likely fullscreen)
               final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
               final shouldUseFullscreenLayout = chewieController.isFullScreen || chewieController.fullScreenByDefault || isLandscape;
-              final screenWidth = MediaQuery.of(context).size.width;
+              final mq = MediaQuery.of(context);
+              final screenWidth = mq.size.width;
+
+              // If expecting fullscreen but current maxWidth is still smaller (transition not finished), schedule another rebuild.
+              if (shouldUseFullscreenLayout && constraints.maxWidth < screenWidth * 0.9) {
+                // Schedule once; microtask + short delay
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (mounted)
+                    Future.delayed(const Duration(milliseconds: 120), () {
+                      if (mounted) setState(() {});
+                    });
+                });
+              }
 
               return shouldUseFullscreenLayout
-                  ? OverflowBox(
-                    alignment: Alignment.topCenter,
-                    minWidth: screenWidth,
-                    maxWidth: screenWidth,
-                    child: Padding(
-                      padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top + 16, left: 16, right: 16, bottom: 16),
-                      child: Row(
-                        children: [
-                          IconButton(
-                            onPressed: () {
-                              if (chewieController.onBack != null) {
-                                chewieController.onBack!();
-                              } else {
-                                Navigator.of(context).pop();
-                              }
-                            },
-                            icon: const Icon(Icons.arrow_back_sharp, color: Colors.white, size: 30),
+                  ? Padding(
+                    padding: EdgeInsets.only(top: mq.padding.top + 16, left: 16, right: 16, bottom: 16),
+                    child: Row(
+                      children: [
+                        IconButton(
+                          onPressed: () {
+                            if (chewieController.onBack != null) {
+                              chewieController.onBack!();
+                            } else {
+                              Navigator.of(context).pop();
+                            }
+                          },
+                          icon: const Icon(Icons.arrow_back_sharp, color: Colors.white, size: 30),
+                        ),
+                        Expanded(
+                          child: Text(
+                            chewieController.videoTitle ?? '',
+                            style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w400),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          Expanded(
-                            child: Text(
-                              chewieController.videoTitle ?? '',
-                              style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w400),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   )
                   : SafeArea(
