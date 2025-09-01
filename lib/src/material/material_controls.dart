@@ -130,15 +130,13 @@ class _MaterialControlsState extends State<MaterialControls> with SingleTickerPr
   }
 
   Widget _buildActionBar() {
-    return Positioned(
+    return Positioned.fill(
       top: 0,
-      left: 0,
-      right: 0,
+      bottom: null,
       child: AnimatedOpacity(
         opacity: (notifier.hideStuff || controller.value.isPlaying) ? 0.0 : 1.0,
         duration: const Duration(milliseconds: 250),
         child: Container(
-          width: double.infinity,
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topCenter,
