@@ -177,7 +177,7 @@ class _CupertinoControlsState extends State<CupertinoControls> with SingleTicker
       bottom: chewieController.isFullScreen,
       minimum: chewieController.controlsSafeAreaMinimum,
       child: AnimatedOpacity(
-        opacity: 1,
+        opacity: (notifier.hideStuff && controller.value.isPlaying) ? 0.0 : 1.0,
         duration: const Duration(milliseconds: 300),
         child: Container(
           width: double.infinity,

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 ///
 /// The new State-Manager for Chewie!
 /// Has to be an instance of Singleton to survive
-/// over all State-Changes inside chewie
+/// over all State-Changes inside chewie  
 ///
 class PlayerNotifier extends ChangeNotifier {
   PlayerNotifier._(bool hideStuff) : _hideStuff = hideStuff;

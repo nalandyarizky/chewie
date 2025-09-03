@@ -258,7 +258,7 @@ class _MaterialControlsState extends State<MaterialControls> with SingleTickerPr
 
   AnimatedOpacity _buildBottomBar(BuildContext context) {
     return AnimatedOpacity(
-      opacity: 1,
+      opacity: (notifier.hideStuff && controller.value.isPlaying) ? 0.0 : 1.0,
       duration: const Duration(milliseconds: 300),
       child: Container(
         width: double.infinity,
